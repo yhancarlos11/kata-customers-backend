@@ -2,94 +2,105 @@
 
 Backend Spring Boot para el reto de ciclo de vida con ambientes DEV y PROD simulado.
 
-## 1. Alcance
+## Arquitectura
 
-- Registro e inicio de sesion con JWT
-- CRUD de clientes (crear, listar, actualizar, eliminar)
-- Endpoint publico para consultar ambiente activo
-- Documentacion detallada con Swagger/OpenAPI
+- Arquitectura por capas:
+	- `controller`: expone endpoints REST.
+	- `service`: contiene reglas de negocio.
+	- `repository`: acceso a datos con Spring Data JPA.
+	- `config/security/common`: configuraciones transversales (JWT, seguridad, OpenAPI, manejo de errores).
+- Seguridad stateless con JWT (`Bearer token`).
+- Persistencia con JPA sobre H2 en memoria para este reto.
+- Documentacion API con OpenAPI/Swagger.
 
-## 2. Requisitos
+## Frameworks y librerias
 
 - Java 21
-- Maven Wrapper (incluido)
+- Spring Boot 3.5.0
+- Spring Web
+- Spring Security
+- Spring Data JPA
+- Spring Validation
+- H2 Database
+- JJWT (firma y validacion de JWT)
+- Springdoc OpenAPI (Swagger UI)
+- JUnit 5 + Mockito (pruebas unitarias)
 
-## 3. Ejecutar por ambiente
+## Comandos importantes (Windows)
 
-### DEV
+## Instalar/compilar rapido
 
-```bash
-./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+```powershell
+.\mvnw.cmd clean package -DskipTests
+```
+
+## Ejecutar backend en DEV
+
+```powershell
+.\mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
 - Puerto: `8080`
 - App name: `customers-dev`
 
-### PROD simulado
+## Ejecutar backend en PROD simulado
 
-```bash
-./mvnw spring-boot:run -Dspring-boot.run.profiles=prod
+```powershell
+.\mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=prod
 ```
 
-- Puerto: `9090` (o `SERVER_PORT`)
+- Puerto: `9090` (o variable `SERVER_PORT`)
 - App name: `customers-prod`
 
-## 4. Swagger / OpenAPI
+## Ejecutar pruebas unitarias
 
-Con el backend levantado:
-
-- Swagger UI: `http://localhost:8080/swagger-ui.html` (DEV)
-- OpenAPI JSON: `http://localhost:8080/v3/api-docs` (DEV)
-
-En PROD simulado reemplazar puerto por `9090`.
-
-### Autenticacion JWT en Swagger
-
-1. Ejecutar `POST /api/auth/register` o `POST /api/auth/login`.
-2. Copiar el `token` de la respuesta.
-3. En Swagger UI, usar boton `Authorize`.
-4. Pegar el token como `Bearer <token>`.
-5. Probar endpoints de `/api/customers` autenticados.
-
-## 5. Endpoints documentados
-
-### Autenticacion
-
-- `POST /api/auth/register`: registra usuario y retorna JWT.
-- `POST /api/auth/login`: autentica y retorna JWT.
-
-### Clientes (requiere JWT)
-
-- `POST /api/customers`: crea cliente.
-- `GET /api/customers`: lista clientes.
-- `PUT /api/customers/{id}`: actualiza cliente.
-- `DELETE /api/customers/{id}`: elimina cliente.
-
-### Ambiente (publico)
-
-- `GET /api/info/environment`: retorna app, puerto, mensaje y perfil activo.
-
-## 6. Build
-
-```bash
-./mvnw clean package
+```powershell
+.\mvnw.cmd test
 ```
 
-Genera:
+## Build ejecutable
+
+```powershell
+.\mvnw.cmd clean package
+```
+
+Salida:
 
 - `target/customers-api-0.0.1-SNAPSHOT.jar`
 
-Ejecucion con jar:
+## Ejecutar JAR
 
-```bash
+```powershell
 java -jar target/customers-api-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev
 java -jar target/customers-api-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod
 ```
 
-## 7. Seguridad
+## Swagger / OpenAPI
 
-- No subir secretos reales al repositorio.
-- JWT configurable por variables de entorno:
+Con la API levantada en DEV:
+
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+
+En PROD simulado usar puerto `9090`.
+
+## Endpoints principales
+
+- Autenticacion:
+	- `POST /api/auth/register`
+	- `POST /api/auth/login`
+- Clientes (requiere JWT):
+	- `POST /api/customers`
+	- `GET /api/customers`
+	- `PUT /api/customers/{id}`
+	- `DELETE /api/customers/{id}`
+- Ambiente (publico):
+	- `GET /api/info/environment`
+
+## Seguridad
+
+- No subir credenciales reales ni secretos al repositorio.
+- Variables para JWT:
 	- `JWT_SECRET_DEV`
 	- `JWT_SECRET_PROD`
 	- `JWT_EXPIRATION_MS`
