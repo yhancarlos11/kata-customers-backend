@@ -29,6 +29,29 @@ public class CustomerService {
         return customerRepository.findAll().stream().map(this::toResponse).toList();
     }
 
+    public CustomerResponse update(Long customerId, CreateCustomerRequest request) {
+        Customer customer = customerRepository
+            .findById(customerId)
+            .orElseThrow(() -> new IllegalArgumentException("Cliente no encontrado"));
+
+        if (customerRepository.existsByEmailAndIdNot(request.getEmail(), customerId)) {
+            throw new IllegalArgumentException("Ya existe un customer con este email");
+        }
+
+        customer.setName(request.getName());
+        customer.setEmail(request.getEmail());
+
+        Customer saved = customerRepository.save(customer);
+        return toResponse(saved);
+    }
+
+    public void delete(Long customerId) {
+        Customer customer = customerRepository
+            .findById(customerId)
+            .orElseThrow(() -> new IllegalArgumentException("Cliente no encontrado"));
+        customerRepository.delete(customer);
+    }
+
     private CustomerResponse toResponse(Customer customer) {
         return new CustomerResponse(
             customer.getId(),
