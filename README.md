@@ -132,7 +132,7 @@ docker compose down
 Objetivo:
 
 - Local: `docker compose` para desarrollo.
-- Cloud: Frontend en Vercel + Backend en Render + DB en Neon.
+- Cloud: Frontend en Vercel + Backend en Render + DB en Neon
 
 Archivos de apoyo incluidos en repo:
 
