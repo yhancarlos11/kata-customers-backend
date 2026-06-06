@@ -1,5 +1,6 @@
 package com.kata.customers.customer;
 
+import com.kata.customers.common.ResourceNotFoundException;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
@@ -29,10 +30,17 @@ public class CustomerService {
         return customerRepository.findAll().stream().map(this::toResponse).toList();
     }
 
+    public CustomerResponse findById(Long customerId) {
+        Customer customer = customerRepository
+            .findById(customerId)
+            .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado"));
+        return toResponse(customer);
+    }
+
     public CustomerResponse update(Long customerId, CreateCustomerRequest request) {
         Customer customer = customerRepository
             .findById(customerId)
-            .orElseThrow(() -> new IllegalArgumentException("Cliente no encontrado"));
+            .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado"));
 
         if (customerRepository.existsByEmailAndIdNot(request.getEmail(), customerId)) {
             throw new IllegalArgumentException("Ya existe un customer con este email");
@@ -48,7 +56,7 @@ public class CustomerService {
     public void delete(Long customerId) {
         Customer customer = customerRepository
             .findById(customerId)
-            .orElseThrow(() -> new IllegalArgumentException("Cliente no encontrado"));
+            .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado"));
         customerRepository.delete(customer);
     }
 

@@ -50,4 +50,18 @@ public class EnvironmentController {
         response.put("activeProfile", profiles.length > 0 ? profiles[0] : "default");
         return response;
     }
+
+    @GetMapping("/health")
+    @Operation(
+        summary = "Health check de la API",
+        description = "Retorna el estado de salud para monitoreo de infraestructura"
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Servicio disponible")
+    })
+    public Map<String, String> health() {
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "UP");
+        return response;
+    }
 }

@@ -197,7 +197,7 @@ Variables requeridas en Render:
 - `SPRING_DATASOURCE_USERNAME=<NEON_USER>`
 - `SPRING_DATASOURCE_PASSWORD=<NEON_PASSWORD>`
 - `JWT_SECRET_PROD=<secreto_largo>`
-- `JWT_EXPIRATION_MS=86400000`
+- `JWT_EXPIRATION_MS=900000`
 
 Validacion cloud backend:
 
