@@ -106,17 +106,38 @@ En PROD simulado usar puerto `9090`.
 	- `JWT_SECRET_PROD`
 	- `JWT_EXPIRATION_MS`
 
-## Docker local completo (front + back + db)
+## Docker local por ambientes (profiles)
 
-Desde carpeta `kata-customers-backend`:
+Desde carpeta `kata-customers-backend` crea un archivo `.env` local con las llaves JWT:
 
-```powershell
-docker compose up --build
+```dotenv
+JWT_SECRET_DEV=<tu_clave_dev>
+JWT_SECRET_PROD=<tu_clave_prod>
 ```
 
-Servicios:
+### Levantar ambiente DEV (front + back)
+
+```powershell
+docker compose down
+docker compose --profile dev up --build -d
+```
+
+Servicios en `dev`:
 
 - Frontend: `http://localhost:4200`
+- Backend: `http://localhost:8080`
+- Swagger: `http://localhost:8080/swagger-ui.html`
+
+### Levantar ambiente PROD simulado (front + back + db)
+
+```powershell
+docker compose down
+docker compose --profile prod up --build -d
+```
+
+Servicios en `prod`:
+
+- Frontend: `http://localhost:4201`
 - Backend: `http://localhost:9090`
 - Swagger: `http://localhost:9090/swagger-ui.html`
 - PostgreSQL: `localhost:5432`
@@ -125,6 +146,21 @@ Detener stack:
 
 ```powershell
 docker compose down
+```
+
+### Atajos PowerShell (dev-up / prod-up)
+
+Se incluyen dos scripts para cambiar ambiente en un solo comando sin cruces:
+
+- `dev-up.ps1` -> baja contenedores previos y levanta perfil `dev`
+- `prod-up.ps1` -> baja contenedores previos y levanta perfil `prod`
+
+Uso:
+
+```powershell
+cd .\kata-customers-backend
+powershell -ExecutionPolicy Bypass -File .\dev-up.ps1
+powershell -ExecutionPolicy Bypass -File .\prod-up.ps1
 ```
 
 ## Opcion 2 (Docker local + cloud)
