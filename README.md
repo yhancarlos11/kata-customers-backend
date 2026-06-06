@@ -140,9 +140,54 @@ Archivos de apoyo incluidos en repo:
 - `../kata-customers-frontend/vercel.json` (rewrite `/api` al backend cloud)
 - `../.env.example` (variables de referencia)
 
+## Configuracion de despliegue backend (Render + Neon)
+
+Referencia completa:
+
+- `../DEPLOYMENT.md`
+
+Resumen backend:
+
+- Runtime en Render: `Docker`
+- Root Directory: vacio (o `.`)
+- Dockerfile Path: `./Dockerfile`
+- Docker Build Context Directory: `.`
+
+Variables requeridas en Render:
+
+- `SPRING_PROFILES_ACTIVE=prod`
+- `SPRING_DATASOURCE_URL=jdbc:postgresql://<NEON_HOST>:5432/<NEON_DB>?sslmode=require`
+- `SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver`
+- `SPRING_DATASOURCE_USERNAME=<NEON_USER>`
+- `SPRING_DATASOURCE_PASSWORD=<NEON_PASSWORD>`
+- `JWT_SECRET_PROD=<secreto_largo>`
+- `JWT_EXPIRATION_MS=86400000`
+
+Validacion cloud backend:
+
+- `https://kata-customers-backend.onrender.com/swagger-ui.html`
+- `https://kata-customers-backend.onrender.com/v3/api-docs`
+
 ## Despliegue continuo (CD)
 
 Si conectas tu repo en Vercel y Render con `auto deploy` activo:
 
 - Cada push a rama principal dispara build/deploy automatico.
 - Esto SI es despliegue continuo (CD).
+
+## Integracion continua (CI) y gate de calidad
+
+Se agrego workflow de CI en:
+
+- `.github/workflows/backend-ci.yml`
+
+El workflow ejecuta en cada push/PR a `main`:
+
+- pruebas unitarias (`./mvnw -B test`)
+- build del jar (`./mvnw -B -DskipTests package`)
+
+Para que el despliegue a produccion quede condicionado a CI:
+
+- habilitar Branch protection sobre `main`
+- marcar como required check el workflow `Backend CI`
+- mantener deploy en Render desde `main`
