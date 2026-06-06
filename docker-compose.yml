@@ -1,12 +1,11 @@
-version: '3.9'
 services:
   db:
     image: postgres:16
     container_name: customers-db
     environment:
-      POSTGRES_DB: customersdb
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${POSTGRES_DB:-customersdb}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
       - "5432:5432"
     volumes:
@@ -22,12 +21,22 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
       SERVER_PORT: 9090
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/customersdb
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
-      JWT_SECRET_PROD: una-clave-larga-segura-para-jwt-en-local-cambiar-en-produccion
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-customersdb}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      JWT_SECRET_PROD: ${JWT_SECRET_PROD:-una-clave-larga-segura-para-jwt-en-local-cambiar-en-produccion}
     ports:
       - "9090:9090"
+
+  frontend:
+    build:
+      context: ../kata-customers-frontend
+      dockerfile: Dockerfile
+    container_name: customers-frontend
+    depends_on:
+      - app
+    ports:
+      - "4200:80"
 
 volumes:
   postgres_data:

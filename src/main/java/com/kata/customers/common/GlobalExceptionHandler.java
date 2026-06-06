@@ -1,36 +1,109 @@
 package com.kata.customers.common;
 
-import java.util.HashMap;
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException ex) {
-        return ResponseEntity.badRequest().body(error("message", ex.getMessage()));
+    public ResponseEntity<ApiErrorResponse> handleIllegalArgument(
+        IllegalArgumentException ex,
+        HttpServletRequest request
+    ) {
+        return ResponseEntity
+            .badRequest()
+            .body(ApiErrorResponse.of(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI()));
     }
 
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<Map<String, String>> handleBadCredentials(BadCredentialsException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error("message", "Credenciales inválidas"));
+    public ResponseEntity<ApiErrorResponse> handleBadCredentials(
+        BadCredentialsException ex,
+        HttpServletRequest request
+    ) {
+        return ResponseEntity
+            .status(HttpStatus.UNAUTHORIZED)
+            .body(
+                ApiErrorResponse.of(
+                    HttpStatus.UNAUTHORIZED,
+                    "Credenciales invalidas",
+                    request.getRequestURI()
+                )
+            );
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException ex) {
-        String message = ex.getBindingResult().getAllErrors().get(0).getDefaultMessage();
-        return ResponseEntity.badRequest().body(error("message", message));
+    public ResponseEntity<ApiErrorResponse> handleValidation(
+        MethodArgumentNotValidException ex,
+        HttpServletRequest request
+    ) {
+        Map<String, String> validationErrors = new LinkedHashMap<>();
+        ex
+            .getBindingResult()
+            .getFieldErrors()
+            .forEach(error -> validationErrors.put(error.getField(), error.getDefaultMessage()));
+
+        return ResponseEntity
+            .badRequest()
+            .body(
+                ApiErrorResponse.ofValidation(
+                    HttpStatus.BAD_REQUEST,
+                    "Error de validacion en la solicitud",
+                    request.getRequestURI(),
+                    validationErrors
+                )
+            );
     }
 
-    private Map<String, String> error(String key, String value) {
-        Map<String, String> body = new HashMap<>();
-        body.put(key, value);
-        return body;
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiErrorResponse> handleMalformedJson(
+        HttpMessageNotReadableException ex,
+        HttpServletRequest request
+    ) {
+        return ResponseEntity
+            .badRequest()
+            .body(
+                ApiErrorResponse.of(
+                    HttpStatus.BAD_REQUEST,
+                    "JSON invalido o mal formado",
+                    request.getRequestURI()
+                )
+            );
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiErrorResponse> handleTypeMismatch(
+        MethodArgumentTypeMismatchException ex,
+        HttpServletRequest request
+    ) {
+        String message = "Parametro invalido: " + ex.getName();
+        return ResponseEntity
+            .badRequest()
+            .body(ApiErrorResponse.of(HttpStatus.BAD_REQUEST, message, request.getRequestURI()));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiErrorResponse> handleUnexpected(
+        Exception ex,
+        HttpServletRequest request
+    ) {
+        return ResponseEntity
+            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(
+                ApiErrorResponse.of(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Error interno del servidor",
+                    request.getRequestURI()
+                )
+            );
     }
 }
