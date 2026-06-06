@@ -2,6 +2,7 @@ services:
   db:
     image: postgres:16
     container_name: customers-db
+    profiles: ["prod"]
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-customersdb}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -11,11 +12,38 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  app-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: customers-api-dev
+    profiles: ["dev"]
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SERVER_PORT: 8080
+      JWT_SECRET_DEV: ${JWT_SECRET_DEV:?JWT_SECRET_DEV is required}
+    ports:
+      - "8080:8080"
+
+  frontend-dev:
+    build:
+      context: ../kata-customers-frontend
+      dockerfile: Dockerfile
+    container_name: customers-frontend-dev
+    profiles: ["dev"]
+    depends_on:
+      - app-dev
+    ports:
+      - "4200:80"
+    volumes:
+      - ../kata-customers-frontend/nginx.dev.conf:/etc/nginx/conf.d/default.conf:ro
+
   app:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: customers-api
+    profiles: ["prod"]
     depends_on:
       - db
     environment:
@@ -24,7 +52,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-customersdb}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      JWT_SECRET_PROD: ${JWT_SECRET_PROD:-una-clave-larga-segura-para-jwt-en-local-cambiar-en-produccion}
+      JWT_SECRET_PROD: ${JWT_SECRET_PROD:?JWT_SECRET_PROD is required}
     ports:
       - "9090:9090"
 
@@ -33,10 +61,11 @@ services:
       context: ../kata-customers-frontend
       dockerfile: Dockerfile
     container_name: customers-frontend
+    profiles: ["prod"]
     depends_on:
       - app
     ports:
-      - "4200:80"
+      - "4201:80"
 
 volumes:
   postgres_data:
