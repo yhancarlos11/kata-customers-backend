@@ -7,7 +7,8 @@ on:
     branches: ["main"]
 
 jobs:
-  test-and-build:
+  backend-ci-checks:
+    name: backend-ci-checks
     runs-on: ubuntu-latest
 
     steps:
