@@ -10,7 +10,7 @@ Backend Spring Boot para el reto de ciclo de vida con ambientes DEV y PROD simul
 	- `repository`: acceso a datos con Spring Data JPA.
 	- `config/security/common`: configuraciones transversales (JWT, seguridad, OpenAPI, manejo de errores).
 - Seguridad stateless con JWT (`Bearer token`).
-- Persistencia con JPA sobre H2 en memoria para este reto.
+- Persistencia con JPA sobre PostgreSQL en perfil `prod`.
 - Documentacion API con OpenAPI/Swagger.
 
 ## Frameworks y librerias
@@ -21,10 +21,11 @@ Backend Spring Boot para el reto de ciclo de vida con ambientes DEV y PROD simul
 - Spring Security
 - Spring Data JPA
 - Spring Validation
-- H2 Database
+- PostgreSQL
 - JJWT (firma y validacion de JWT)
 - Springdoc OpenAPI (Swagger UI)
 - JUnit 5 + Mockito (pruebas unitarias)
+- Docker + Docker Compose
 
 ## Comandos importantes (Windows)
 
@@ -104,3 +105,44 @@ En PROD simulado usar puerto `9090`.
 	- `JWT_SECRET_DEV`
 	- `JWT_SECRET_PROD`
 	- `JWT_EXPIRATION_MS`
+
+## Docker local completo (front + back + db)
+
+Desde carpeta `kata-customers-backend`:
+
+```powershell
+docker compose up --build
+```
+
+Servicios:
+
+- Frontend: `http://localhost:4200`
+- Backend: `http://localhost:9090`
+- Swagger: `http://localhost:9090/swagger-ui.html`
+- PostgreSQL: `localhost:5432`
+
+Detener stack:
+
+```powershell
+docker compose down
+```
+
+## Opcion 2 (Docker local + cloud)
+
+Objetivo:
+
+- Local: `docker compose` para desarrollo.
+- Cloud: Frontend en Vercel + Backend en Render + DB en Neon.
+
+Archivos de apoyo incluidos en repo:
+
+- `render.yaml` (base para Render)
+- `../kata-customers-frontend/vercel.json` (rewrite `/api` al backend cloud)
+- `../.env.example` (variables de referencia)
+
+## Despliegue continuo (CD)
+
+Si conectas tu repo en Vercel y Render con `auto deploy` activo:
+
+- Cada push a rama principal dispara build/deploy automatico.
+- Esto SI es despliegue continuo (CD).
