@@ -71,12 +71,26 @@ public class JwtService {
     }
 
     private Key getSignInKey() {
-        byte[] keyBytes;
+        byte[] keyBytes = null;
         try {
-            keyBytes = Decoders.BASE64.decode(jwtSecret);
+            byte[] decoded = Decoders.BASE64.decode(jwtSecret);
+            if (decoded.length >= 32) {
+                keyBytes = decoded;
+            }
         } catch (RuntimeException ex) {
+            // Fallback to raw secret when value is not valid Base64.
+        }
+
+        if (keyBytes == null) {
             keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
         }
+
+        if (keyBytes.length < 32) {
+            throw new IllegalStateException(
+                "JWT secret must be at least 32 bytes after decoding/normalization"
+            );
+        }
+
         return Keys.hmacShaKeyFor(keyBytes);
     }
 }
