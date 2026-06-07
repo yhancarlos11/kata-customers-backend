@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -24,6 +25,8 @@ import org.springframework.test.web.servlet.MvcResult;
 )
 class AuthFlowIntegrationTest {
 
+    private record TokenPair(String accessToken, String refreshToken) {}
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -32,7 +35,7 @@ class AuthFlowIntegrationTest {
 
     @Test
     void logoutShouldRevokeJwtAndBlockFutureRequests() throws Exception {
-        String username = "user_logout_test";
+        String username = "user_logout_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
         String registerPayload =
             """
             {
@@ -50,9 +53,11 @@ class AuthFlowIntegrationTest {
             )
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.token").isNotEmpty())
+            .andExpect(jsonPath("$.refreshToken").isNotEmpty())
             .andReturn();
 
-        String token = extractToken(registerResult);
+        TokenPair tokenPair = extractTokens(registerResult);
+        String token = tokenPair.accessToken();
 
         mockMvc
             .perform(get("/api/auth/me").header("Authorization", "Bearer " + token))
@@ -67,10 +72,20 @@ class AuthFlowIntegrationTest {
         mockMvc
             .perform(get("/api/auth/me").header("Authorization", "Bearer " + token))
             .andExpect(status().isUnauthorized());
+
+        mockMvc
+            .perform(
+                post("/api/auth/refresh")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"refreshToken\":\"" + tokenPair.refreshToken() + "\"}")
+            )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.token").isNotEmpty())
+            .andExpect(jsonPath("$.refreshToken").isNotEmpty());
     }
 
-    private String extractToken(MvcResult result) throws Exception {
+    private TokenPair extractTokens(MvcResult result) throws Exception {
         JsonNode root = objectMapper.readTree(result.getResponse().getContentAsString());
-        return root.path("token").asText();
+        return new TokenPair(root.path("token").asText(), root.path("refreshToken").asText());
     }
 }

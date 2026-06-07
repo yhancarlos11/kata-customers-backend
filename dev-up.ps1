@@ -1,3 +1,7 @@
+param(
+    [switch]$Reset
+)
+
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
@@ -38,7 +42,9 @@ try {
         throw 'JWT_SECRET_DEV no esta definido. Configuralo en .env o en variables de entorno.'
     }
 
-    docker compose -p kata-customers down --remove-orphans
+    if ($Reset) {
+        docker compose -p kata-customers down --remove-orphans
+    }
     docker compose -p kata-customers --profile dev up --build -d
     docker compose -p kata-customers ps
 }
