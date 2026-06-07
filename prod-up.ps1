@@ -38,6 +38,14 @@ try {
         throw 'JWT_SECRET_PROD no esta definido. Configuralo en .env o en variables de entorno.'
     }
 
+    $legacyContainers = @('customers-db', 'customers-api', 'customers-frontend')
+    foreach ($name in $legacyContainers) {
+        $existing = docker ps -a --filter "name=^/$name$" --format "{{.Names}}"
+        if ($existing -contains $name) {
+            docker rm -f $name | Out-Null
+        }
+    }
+
     docker compose -p kata-customers down --remove-orphans
     docker compose -p kata-customers --profile prod up --build -d
     docker compose -p kata-customers ps

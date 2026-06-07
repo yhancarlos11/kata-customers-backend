@@ -1,7 +1,6 @@
 services:
   db:
     image: postgres:16
-    container_name: customers-db
     profiles: ["prod"]
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-customersdb}
@@ -16,7 +15,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: customers-api-dev
     profiles: ["dev"]
     environment:
       SPRING_PROFILES_ACTIVE: dev
@@ -33,7 +31,6 @@ services:
       dockerfile: Dockerfile
       args:
         BUILD_TARGET: dev
-    container_name: customers-frontend-dev
     profiles: ["dev"]
     depends_on:
       - app-dev
@@ -46,7 +43,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: customers-api
     profiles: ["prod"]
     depends_on:
       - db
@@ -66,7 +62,6 @@ services:
       dockerfile: Dockerfile
       args:
         BUILD_TARGET: prod
-    container_name: customers-frontend
     profiles: ["prod"]
     depends_on:
       - app

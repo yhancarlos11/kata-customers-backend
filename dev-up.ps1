@@ -42,6 +42,14 @@ try {
         throw 'JWT_SECRET_DEV no esta definido. Configuralo en .env o en variables de entorno.'
     }
 
+    $legacyContainers = @('customers-api-dev', 'customers-frontend-dev')
+    foreach ($name in $legacyContainers) {
+        $existing = docker ps -a --filter "name=^/$name$" --format "{{.Names}}"
+        if ($existing -contains $name) {
+            docker rm -f $name | Out-Null
+        }
+    }
+
     if ($Reset) {
         docker compose -p kata-customers down --remove-orphans
     }
