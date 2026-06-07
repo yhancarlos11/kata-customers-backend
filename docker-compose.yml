@@ -1,30 +1,44 @@
 services:
-  db:
+  db-dev:
     image: postgres:16
-    profiles: ["prod"]
+    profiles: ["dev"]
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-customersdb}
+      POSTGRES_DB: ${POSTGRES_DB_DEV:-customersdb_dev}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_dev_data:/var/lib/postgresql/data
+
+  db-prod:
+    image: postgres:16
+    profiles: ["prod"]
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB_PROD:-customersdb_prod}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
 
   app-dev:
     build:
       context: .
       dockerfile: Dockerfile
     profiles: ["dev"]
+    depends_on:
+      - db-dev
     environment:
       SPRING_PROFILES_ACTIVE: dev
       SERVER_PORT: 8080
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db-dev:5432/${POSTGRES_DB_DEV:-customersdb_dev}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       JWT_SECRET_DEV: ${JWT_SECRET_DEV:?JWT_SECRET_DEV is required}
     ports:
       - "8080:8080"
-    volumes:
-      - ./data:/app/data
-
   frontend-dev:
     build:
       context: ../kata-customers-frontend
@@ -45,11 +59,11 @@ services:
       dockerfile: Dockerfile
     profiles: ["prod"]
     depends_on:
-      - db
+      - db-prod
     environment:
       SPRING_PROFILES_ACTIVE: prod
       SERVER_PORT: 9090
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-customersdb}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db-prod:5432/${POSTGRES_DB_PROD:-customersdb_prod}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       JWT_SECRET_PROD: ${JWT_SECRET_PROD:?JWT_SECRET_PROD is required}
@@ -69,4 +83,5 @@ services:
       - "4201:80"
 
 volumes:
-  postgres_data:
+  postgres_dev_data:
+  postgres_prod_data:
