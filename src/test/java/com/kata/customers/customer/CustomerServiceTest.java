@@ -93,7 +93,7 @@ class CustomerServiceTest {
         Customer customer = new Customer(3L, "Maria", "maria@email.com", LocalDateTime.of(2026, 1, 2, 10, 0));
         when(customerRepository.findById(3L)).thenReturn(Optional.of(customer));
 
-        CustomerResponse result = customerService.findById(3L);
+        CustomerDetailResponse result = customerService.findById(3L);
 
         assertEquals(3L, result.getId());
         assertEquals("Maria", result.getName());

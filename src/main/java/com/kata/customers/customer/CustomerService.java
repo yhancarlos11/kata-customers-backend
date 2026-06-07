@@ -1,8 +1,10 @@
 package com.kata.customers.customer;
 
 import com.kata.customers.common.ResourceNotFoundException;
+import com.kata.customers.product.ProductResponse;
 import java.util.List;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CustomerService {
@@ -30,11 +32,32 @@ public class CustomerService {
         return customerRepository.findAll().stream().map(this::toResponse).toList();
     }
 
-    public CustomerResponse findById(Long customerId) {
+    @Transactional(readOnly = true)
+    public CustomerDetailResponse findById(Long customerId) {
         Customer customer = customerRepository
             .findById(customerId)
             .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado"));
-        return toResponse(customer);
+
+        List<ProductResponse> products = customer
+            .getProducts()
+            .stream()
+            .map(product ->
+                new ProductResponse(
+                    product.getId(),
+                    product.getName(),
+                    product.getPrice(),
+                    product.getDescription()
+                )
+            )
+            .toList();
+
+        return new CustomerDetailResponse(
+            customer.getId(),
+            customer.getName(),
+            customer.getEmail(),
+            customer.getCreatedAt(),
+            products
+        );
     }
 
     public CustomerResponse update(Long customerId, CreateCustomerRequest request) {

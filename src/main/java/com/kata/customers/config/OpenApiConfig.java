@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.info.License;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.annotations.servers.Server;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
@@ -23,6 +24,12 @@ import org.springframework.context.annotation.Configuration;
     servers = {
         @Server(url = "http://localhost:8080", description = "Backend DEV"),
         @Server(url = "http://localhost:9090", description = "Backend PROD simulado")
+    },
+    tags = {
+        @Tag(name = "Autenticacion", description = "Registro, login, logout y validacion de sesion"),
+        @Tag(name = "Clientes", description = "CRUD de clientes"),
+        @Tag(name = "Productos", description = "CRUD de productos asociados a un cliente"),
+        @Tag(name = "Ambiente", description = "Informacion de perfil y health checks")
     },
     security = @SecurityRequirement(name = "bearerAuth")
 )

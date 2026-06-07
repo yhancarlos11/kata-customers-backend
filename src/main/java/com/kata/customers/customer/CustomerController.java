@@ -58,7 +58,7 @@ public class CustomerController {
         @ApiResponse(responseCode = "401", description = "No autenticado"),
         @ApiResponse(responseCode = "404", description = "Cliente no encontrado")
     })
-    public ResponseEntity<CustomerResponse> findById(@PathVariable("id") Long id) {
+    public ResponseEntity<CustomerDetailResponse> findById(@PathVariable("id") Long id) {
         return ResponseEntity.ok(customerService.findById(id));
     }
 
