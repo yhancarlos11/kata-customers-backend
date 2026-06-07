@@ -1,5 +1,6 @@
-package com.kata.customers.auth;
+package com.kata.customers.infrastructure.persistence.repository;
 
+import com.kata.customers.auth.RefreshToken;
 import com.kata.customers.user.AppUser;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;

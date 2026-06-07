@@ -1,94 +1,95 @@
 package com.kata.customers.auth;
 
+import com.kata.customers.application.port.in.AuthUseCase;
+import com.kata.customers.application.port.out.AuthenticationPort;
+import com.kata.customers.application.port.out.AuthUserPort;
+import com.kata.customers.application.port.out.PasswordHashPort;
+import com.kata.customers.application.port.out.RefreshTokenPort;
+import com.kata.customers.application.port.out.TokenPort;
+import com.kata.customers.application.port.out.TokenRevocationPort;
 import com.kata.customers.common.ResourceNotFoundException;
-import com.kata.customers.security.JwtService;
-import com.kata.customers.security.TokenBlacklistService;
 import com.kata.customers.user.AppUser;
-import com.kata.customers.user.AppUserRepository;
 import com.kata.customers.user.UserRole;
 import java.time.Instant;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class AuthService {
+public class AuthService implements AuthUseCase {
 
-    private final AppUserRepository appUserRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
-    private final AuthenticationManager authenticationManager;
-    private final TokenBlacklistService tokenBlacklistService;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final AuthUserPort authUserPort;
+    private final PasswordHashPort passwordHashPort;
+    private final TokenPort tokenPort;
+    private final AuthenticationPort authenticationPort;
+    private final TokenRevocationPort tokenRevocationPort;
+    private final RefreshTokenPort refreshTokenPort;
 
     @Value("${app.jwt.refresh-expiration-ms}")
     private long refreshTokenExpirationMs;
 
     public AuthService(
-        AppUserRepository appUserRepository,
-        PasswordEncoder passwordEncoder,
-        JwtService jwtService,
-        AuthenticationManager authenticationManager,
-        TokenBlacklistService tokenBlacklistService,
-        RefreshTokenRepository refreshTokenRepository
+        AuthUserPort authUserPort,
+        PasswordHashPort passwordHashPort,
+        TokenPort tokenPort,
+        AuthenticationPort authenticationPort,
+        TokenRevocationPort tokenRevocationPort,
+        RefreshTokenPort refreshTokenPort
     ) {
-        this.appUserRepository = appUserRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtService = jwtService;
-        this.authenticationManager = authenticationManager;
-        this.tokenBlacklistService = tokenBlacklistService;
-        this.refreshTokenRepository = refreshTokenRepository;
+        this.authUserPort = authUserPort;
+        this.passwordHashPort = passwordHashPort;
+        this.tokenPort = tokenPort;
+        this.authenticationPort = authenticationPort;
+        this.tokenRevocationPort = tokenRevocationPort;
+        this.refreshTokenPort = refreshTokenPort;
     }
 
+    @Override
     public AuthResponse register(RegisterRequest request) {
-        if (appUserRepository.existsByUsername(request.getUsername())) {
+        if (authUserPort.existsByUsername(request.getUsername())) {
             throw new IllegalArgumentException("El username ya existe");
         }
 
-        if (appUserRepository.existsByEmail(request.getEmail())) {
+        if (authUserPort.existsByEmail(request.getEmail())) {
             throw new IllegalArgumentException("El email ya existe");
         }
 
         AppUser user = new AppUser();
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setPassword(passwordHashPort.encode(request.getPassword()));
         user.setRole(UserRole.USER);
 
-        AppUser saved = appUserRepository.save(user);
+        AppUser saved = authUserPort.save(user);
         return issueTokens(saved);
     }
 
+    @Override
     public AuthResponse login(LoginRequest request) {
-        authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
-        );
+        authenticationPort.authenticate(request.getUsername(), request.getPassword());
 
-        AppUser user = appUserRepository
+        AppUser user = authUserPort
             .findByUsername(request.getUsername())
             .orElseThrow(() -> new IllegalArgumentException("Credenciales inválidas"));
 
         return issueTokens(user);
     }
 
+    @Override
     public AuthMeResponse me(String username) {
-        AppUser user = appUserRepository
+        AppUser user = authUserPort
             .findByUsername(username)
             .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
         return new AuthMeResponse(user.getUsername(), user.getEmail(), user.getRole().name());
     }
 
+    @Override
     @Transactional
     public AuthResponse refresh(String refreshTokenValue) {
-        RefreshToken refreshToken = refreshTokenRepository
+        RefreshToken refreshToken = refreshTokenPort
             .findByToken(refreshTokenValue)
             .orElseThrow(() -> new BadCredentialsException("Refresh token invalido"));
 
@@ -98,20 +99,21 @@ public class AuthService {
 
         AppUser user = refreshToken.getUser();
         refreshToken.setRevoked(true);
-        refreshTokenRepository.save(refreshToken);
+        refreshTokenPort.save(refreshToken);
 
         return issueTokens(user);
     }
 
+    @Override
     @Transactional
     public LogoutResponse logout(String token, String refreshTokenValue) {
-        Instant expiresAt = jwtService.extractExpiration(token).toInstant();
-        tokenBlacklistService.revoke(token, expiresAt);
+        Instant expiresAt = tokenPort.extractExpiration(token);
+        tokenRevocationPort.revoke(token, expiresAt);
 
         if (refreshTokenValue != null && !refreshTokenValue.isBlank()) {
-            refreshTokenRepository.findByToken(refreshTokenValue).ifPresent(stored -> {
+            refreshTokenPort.findByToken(refreshTokenValue).ifPresent(stored -> {
                 stored.setRevoked(true);
-                refreshTokenRepository.save(stored);
+                refreshTokenPort.save(stored);
             });
         }
 
@@ -119,7 +121,7 @@ public class AuthService {
     }
 
     private AuthResponse issueTokens(AppUser user) {
-        String accessToken = jwtService.generateToken(toUserDetails(user));
+        String accessToken = tokenPort.generateToken(user);
         String refreshTokenValue = UUID.randomUUID().toString();
 
         RefreshToken refreshToken = new RefreshToken();
@@ -127,16 +129,8 @@ public class AuthService {
         refreshToken.setUser(user);
         refreshToken.setExpiresAt(Instant.now().plusMillis(refreshTokenExpirationMs));
         refreshToken.setRevoked(false);
-        refreshTokenRepository.save(refreshToken);
+        refreshTokenPort.save(refreshToken);
 
         return new AuthResponse(accessToken, refreshTokenValue);
-    }
-
-    private UserDetails toUserDetails(AppUser user) {
-        return User
-            .withUsername(user.getUsername())
-            .password(user.getPassword())
-            .roles(user.getRole().name())
-            .build();
     }
 }

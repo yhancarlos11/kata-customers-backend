@@ -1,5 +1,6 @@
 package com.kata.customers.customer;
 
+import com.kata.customers.application.port.out.CustomerPort;
 import com.kata.customers.common.ResourceNotFoundException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -22,13 +23,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class CustomerServiceTest {
 
     @Mock
-    private CustomerRepository customerRepository;
+    private CustomerPort customerPort;
 
     private CustomerService customerService;
 
     @BeforeEach
     void setUp() {
-        customerService = new CustomerService(customerRepository);
+        customerService = new CustomerService(customerPort);
     }
 
     @Test
@@ -44,15 +45,15 @@ class CustomerServiceTest {
             LocalDateTime.of(2026, 1, 1, 10, 0)
         );
 
-        when(customerRepository.existsByEmail("juan@email.com")).thenReturn(false);
-        when(customerRepository.save(any(Customer.class))).thenReturn(savedCustomer);
+        when(customerPort.existsByEmail("juan@email.com")).thenReturn(false);
+        when(customerPort.save(any(Customer.class))).thenReturn(savedCustomer);
 
         CustomerResponse result = customerService.create(request);
 
         assertEquals(1L, result.getId());
         assertEquals("Juan Perez", result.getName());
         assertEquals("juan@email.com", result.getEmail());
-        verify(customerRepository).save(any(Customer.class));
+        verify(customerPort).save(any(Customer.class));
     }
 
     @Test
@@ -61,7 +62,7 @@ class CustomerServiceTest {
         request.setName("Juan Perez");
         request.setEmail("juan@email.com");
 
-        when(customerRepository.existsByEmail("juan@email.com")).thenReturn(true);
+        when(customerPort.existsByEmail("juan@email.com")).thenReturn(true);
 
         IllegalArgumentException error = assertThrows(
             IllegalArgumentException.class,
@@ -69,12 +70,12 @@ class CustomerServiceTest {
         );
 
         assertTrue(error.getMessage().contains("email"));
-        verify(customerRepository, never()).save(any(Customer.class));
+        verify(customerPort, never()).save(any(Customer.class));
     }
 
     @Test
     void findAllShouldMapRepositoryEntitiesToResponses() {
-        when(customerRepository.findAll()).thenReturn(
+        when(customerPort.findAll()).thenReturn(
             List.of(
                 new Customer(1L, "Ana", "ana@email.com", LocalDateTime.of(2026, 1, 1, 8, 0)),
                 new Customer(2L, "Luis", "luis@email.com", LocalDateTime.of(2026, 1, 1, 9, 0))
@@ -91,7 +92,7 @@ class CustomerServiceTest {
     @Test
     void findByIdShouldReturnCustomerWhenExists() {
         Customer customer = new Customer(3L, "Maria", "maria@email.com", LocalDateTime.of(2026, 1, 2, 10, 0));
-        when(customerRepository.findById(3L)).thenReturn(Optional.of(customer));
+        when(customerPort.findById(3L)).thenReturn(Optional.of(customer));
 
         CustomerDetailResponse result = customerService.findById(3L);
 
@@ -113,22 +114,22 @@ class CustomerServiceTest {
             LocalDateTime.of(2026, 1, 1, 12, 0)
         );
 
-        when(customerRepository.findById(2L)).thenReturn(Optional.of(existing));
-        when(customerRepository.existsByEmailAndIdNot("nuevo@email.com", 2L)).thenReturn(false);
-        when(customerRepository.save(existing)).thenReturn(existing);
+        when(customerPort.findById(2L)).thenReturn(Optional.of(existing));
+        when(customerPort.existsByEmailAndIdNot("nuevo@email.com", 2L)).thenReturn(false);
+        when(customerPort.save(existing)).thenReturn(existing);
 
         CustomerResponse result = customerService.update(2L, request);
 
         assertEquals("Cliente Actualizado", result.getName());
         assertEquals("nuevo@email.com", result.getEmail());
-        verify(customerRepository).save(existing);
+        verify(customerPort).save(existing);
     }
 
     @Test
     void deleteShouldFailWhenCustomerDoesNotExist() {
-        when(customerRepository.findById(99L)).thenReturn(Optional.empty());
+        when(customerPort.findById(99L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> customerService.delete(99L));
-        verify(customerRepository, never()).delete(any(Customer.class));
+        verify(customerPort, never()).delete(any(Customer.class));
     }
 }

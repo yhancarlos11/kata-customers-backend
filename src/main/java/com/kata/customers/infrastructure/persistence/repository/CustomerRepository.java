@@ -1,5 +1,6 @@
-package com.kata.customers.customer;
+package com.kata.customers.infrastructure.persistence.repository;
 
+import com.kata.customers.customer.Customer;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface CustomerRepository extends JpaRepository<Customer, Long> {

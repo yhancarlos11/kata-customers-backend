@@ -1,5 +1,6 @@
 package com.kata.customers.product;
 
+import com.kata.customers.application.port.in.ProductUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -24,10 +25,10 @@ import org.springframework.web.bind.annotation.RestController;
 @SecurityRequirement(name = "bearerAuth")
 public class ProductController {
 
-    private final ProductService productService;
+    private final ProductUseCase productUseCase;
 
-    public ProductController(ProductService productService) {
-        this.productService = productService;
+    public ProductController(ProductUseCase productUseCase) {
+        this.productUseCase = productUseCase;
     }
 
     @PostMapping
@@ -44,7 +45,7 @@ public class ProductController {
         @PathVariable("customerId") Long customerId,
         @Valid @RequestBody CreateProductRequest request
     ) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(productService.create(customerId, request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(productUseCase.create(customerId, request));
     }
 
     @GetMapping
@@ -59,7 +60,7 @@ public class ProductController {
     public ResponseEntity<List<ProductResponse>> listByCustomer(
         @PathVariable("customerId") Long customerId
     ) {
-        return ResponseEntity.ok(productService.listByCustomer(customerId));
+        return ResponseEntity.ok(productUseCase.listByCustomer(customerId));
     }
 
     @PutMapping("/{productId}")
@@ -77,7 +78,7 @@ public class ProductController {
         @PathVariable("productId") Long productId,
         @Valid @RequestBody CreateProductRequest request
     ) {
-        return ResponseEntity.ok(productService.update(customerId, productId, request));
+        return ResponseEntity.ok(productUseCase.update(customerId, productId, request));
     }
 
     @DeleteMapping("/{productId}")
@@ -93,7 +94,7 @@ public class ProductController {
         @PathVariable("customerId") Long customerId,
         @PathVariable("productId") Long productId
     ) {
-        productService.delete(customerId, productId);
+        productUseCase.delete(customerId, productId);
         return ResponseEntity.noContent().build();
     }
 }

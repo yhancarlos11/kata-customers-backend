@@ -1,13 +1,15 @@
-package com.kata.customers.user;
+package com.kata.customers.application.port.out;
 
+import com.kata.customers.user.AppUser;
 import java.util.Optional;
-import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface AppUserRepository extends JpaRepository<AppUser, Long> {
+public interface AuthUserPort {
 
     Optional<AppUser> findByUsername(String username);
 
     boolean existsByUsername(String username);
 
     boolean existsByEmail(String email);
+
+    AppUser save(AppUser user);
 }
