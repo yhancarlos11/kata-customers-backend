@@ -1,5 +1,6 @@
 package com.kata.customers.auth;
 
+import com.kata.customers.application.port.in.AuthUseCase;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -17,7 +18,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
@@ -26,7 +26,7 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 class AuthControllerTest {
 
     @Mock
-    private AuthService authService;
+    private AuthUseCase authUseCase;
 
     private MockMvc mockMvc;
     private ObjectMapper objectMapper;
@@ -37,7 +37,7 @@ class AuthControllerTest {
         validator.afterPropertiesSet();
 
         objectMapper = new ObjectMapper();
-        AuthController controller = new AuthController(authService);
+        AuthController controller = new AuthController(authUseCase);
         mockMvc = MockMvcBuilders
             .standaloneSetup(controller)
             .setControllerAdvice(new GlobalExceptionHandler())
@@ -48,7 +48,7 @@ class AuthControllerTest {
     @Test
     void registerShouldReturnTokenPair() throws Exception {
         AuthResponse response = new AuthResponse("access-token", "refresh-token");
-        when(authService.register(any(RegisterRequest.class))).thenReturn(response);
+        when(authUseCase.register(any(RegisterRequest.class))).thenReturn(response);
 
         String payload =
             """
@@ -68,7 +68,7 @@ class AuthControllerTest {
 
     @Test
     void refreshShouldReturnNewTokens() throws Exception {
-        when(authService.refresh("refresh-old"))
+        when(authUseCase.refresh("refresh-old"))
             .thenReturn(new AuthResponse("access-new", "refresh-new"));
 
         String payload = "{" + "\"refreshToken\":\"refresh-old\"" + "}";
@@ -79,7 +79,7 @@ class AuthControllerTest {
             .andExpect(jsonPath("$.token").value("access-new"))
             .andExpect(jsonPath("$.refreshToken").value("refresh-new"));
 
-        verify(authService).refresh("refresh-old");
+        verify(authUseCase).refresh("refresh-old");
     }
 
     @Test
@@ -94,7 +94,7 @@ class AuthControllerTest {
 
     @Test
     void logoutShouldPassAccessAndRefreshTokens() throws Exception {
-        when(authService.logout(eq("access-token"), eq("refresh-token")))
+        when(authUseCase.logout(eq("access-token"), eq("refresh-token")))
             .thenReturn(new LogoutResponse("Sesion cerrada correctamente"));
 
         LogoutRequest request = new LogoutRequest();
@@ -110,7 +110,7 @@ class AuthControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.message").value("Sesion cerrada correctamente"));
 
-        verify(authService).logout("access-token", "refresh-token");
+        verify(authUseCase).logout("access-token", "refresh-token");
     }
 
     @Test
@@ -123,7 +123,7 @@ class AuthControllerTest {
 
     @Test
     void meShouldReturnAuthenticatedUserData() throws Exception {
-        when(authService.me("demoUser"))
+        when(authUseCase.me("demoUser"))
             .thenReturn(new AuthMeResponse("demoUser", "demo@correo.com", "USER"));
 
         UsernamePasswordAuthenticationToken authentication =
@@ -136,6 +136,6 @@ class AuthControllerTest {
             .andExpect(jsonPath("$.email").value("demo@correo.com"))
             .andExpect(jsonPath("$.role").value("USER"));
 
-        verify(authService).me("demoUser");
+        verify(authUseCase).me("demoUser");
     }
 }

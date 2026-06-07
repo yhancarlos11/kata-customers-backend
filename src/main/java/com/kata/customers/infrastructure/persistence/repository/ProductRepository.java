@@ -1,5 +1,6 @@
-package com.kata.customers.product;
+package com.kata.customers.infrastructure.persistence.repository;
 
+import com.kata.customers.product.Product;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;

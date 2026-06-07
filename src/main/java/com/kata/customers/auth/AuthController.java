@@ -1,5 +1,6 @@
 package com.kata.customers.auth;
 
+import com.kata.customers.application.port.in.AuthUseCase;
 import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -20,10 +21,10 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Autenticacion", description = "Endpoints para registro, inicio y cierre de sesion")
 public class AuthController {
 
-    private final AuthService authService;
+    private final AuthUseCase authUseCase;
 
-    public AuthController(AuthService authService) {
-        this.authService = authService;
+    public AuthController(AuthUseCase authUseCase) {
+        this.authUseCase = authUseCase;
     }
 
     @PostMapping("/register")
@@ -33,7 +34,7 @@ public class AuthController {
         @ApiResponse(responseCode = "400", description = "Solicitud invalida")
     })
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        return ResponseEntity.ok(authService.register(request));
+        return ResponseEntity.ok(authUseCase.register(request));
     }
 
     @PostMapping("/login")
@@ -44,7 +45,7 @@ public class AuthController {
         @ApiResponse(responseCode = "400", description = "Solicitud invalida")
     })
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+        return ResponseEntity.ok(authUseCase.login(request));
     }
 
     @PostMapping("/logout")
@@ -63,7 +64,7 @@ public class AuthController {
     ) {
         String token = extractBearerToken(authorizationHeader);
         String refreshToken = request == null ? null : request.getRefreshToken();
-        return ResponseEntity.ok(authService.logout(token, refreshToken));
+        return ResponseEntity.ok(authUseCase.logout(token, refreshToken));
     }
 
     @PostMapping("/refresh")
@@ -77,7 +78,7 @@ public class AuthController {
         @ApiResponse(responseCode = "400", description = "Solicitud invalida")
     })
     public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
-        return ResponseEntity.ok(authService.refresh(request.getRefreshToken()));
+        return ResponseEntity.ok(authUseCase.refresh(request.getRefreshToken()));
     }
 
     @GetMapping("/me")
@@ -91,7 +92,7 @@ public class AuthController {
         @ApiResponse(responseCode = "401", description = "Token ausente, invalido o expirado")
     })
     public AuthMeResponse me(Authentication authentication) {
-        return authService.me(authentication.getName());
+        return authUseCase.me(authentication.getName());
     }
 
     private String extractBearerToken(String authorizationHeader) {

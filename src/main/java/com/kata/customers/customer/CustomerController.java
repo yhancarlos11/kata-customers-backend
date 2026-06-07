@@ -1,5 +1,6 @@
 package com.kata.customers.customer;
 
+import com.kata.customers.application.port.in.CustomerUseCase;
 import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -24,10 +25,10 @@ import org.springframework.web.bind.annotation.RestController;
 @SecurityRequirement(name = "bearerAuth")
 public class CustomerController {
 
-    private final CustomerService customerService;
+    private final CustomerUseCase customerUseCase;
 
-    public CustomerController(CustomerService customerService) {
-        this.customerService = customerService;
+    public CustomerController(CustomerUseCase customerUseCase) {
+        this.customerUseCase = customerUseCase;
     }
 
     @PostMapping
@@ -38,7 +39,7 @@ public class CustomerController {
         @ApiResponse(responseCode = "401", description = "No autenticado")
     })
     public ResponseEntity<CustomerResponse> create(@Valid @RequestBody CreateCustomerRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(customerService.create(request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(customerUseCase.create(request));
     }
 
     @GetMapping
@@ -48,7 +49,7 @@ public class CustomerController {
         @ApiResponse(responseCode = "401", description = "No autenticado")
     })
     public ResponseEntity<List<CustomerResponse>> findAll() {
-        return ResponseEntity.ok(customerService.findAll());
+        return ResponseEntity.ok(customerUseCase.findAll());
     }
 
     @GetMapping("/{id}")
@@ -59,7 +60,7 @@ public class CustomerController {
         @ApiResponse(responseCode = "404", description = "Cliente no encontrado")
     })
     public ResponseEntity<CustomerDetailResponse> findById(@PathVariable("id") Long id) {
-        return ResponseEntity.ok(customerService.findById(id));
+        return ResponseEntity.ok(customerUseCase.findById(id));
     }
 
     @PutMapping("/{id}")
@@ -74,7 +75,7 @@ public class CustomerController {
         @PathVariable("id") Long id,
         @Valid @RequestBody CreateCustomerRequest request
     ) {
-        return ResponseEntity.ok(customerService.update(id, request));
+        return ResponseEntity.ok(customerUseCase.update(id, request));
     }
 
     @DeleteMapping("/{id}")
@@ -85,7 +86,7 @@ public class CustomerController {
         @ApiResponse(responseCode = "404", description = "Cliente no encontrado")
     })
     public ResponseEntity<Void> delete(@PathVariable("id") Long id) {
-        customerService.delete(id);
+        customerUseCase.delete(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

@@ -1,5 +1,6 @@
 package com.kata.customers.product;
 
+import com.kata.customers.application.port.in.ProductUseCase;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -26,7 +27,7 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 class ProductControllerTest {
 
     @Mock
-    private ProductService productService;
+    private ProductUseCase productUseCase;
 
     private MockMvc mockMvc;
 
@@ -35,7 +36,7 @@ class ProductControllerTest {
         LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
         validator.afterPropertiesSet();
 
-        ProductController controller = new ProductController(productService);
+        ProductController controller = new ProductController(productUseCase);
         mockMvc = MockMvcBuilders
             .standaloneSetup(controller)
             .setControllerAdvice(new GlobalExceptionHandler())
@@ -45,7 +46,7 @@ class ProductControllerTest {
 
     @Test
     void createShouldReturnCreatedProduct() throws Exception {
-        when(productService.create(any(Long.class), any(CreateProductRequest.class)))
+        when(productUseCase.create(any(Long.class), any(CreateProductRequest.class)))
             .thenReturn(new ProductResponse(10L, "Laptop", new BigDecimal("2500000"), "Equipo"));
 
         String payload =
@@ -93,7 +94,7 @@ class ProductControllerTest {
 
     @Test
     void listByCustomerShouldReturnProducts() throws Exception {
-        when(productService.listByCustomer(1L))
+        when(productUseCase.listByCustomer(1L))
             .thenReturn(
                 List.of(
                     new ProductResponse(1L, "Mouse", new BigDecimal("50000"), "Inalambrico"),
@@ -107,12 +108,12 @@ class ProductControllerTest {
             .andExpect(jsonPath("$[0].name").value("Mouse"))
             .andExpect(jsonPath("$[1].name").value("Teclado"));
 
-        verify(productService).listByCustomer(1L);
+        verify(productUseCase).listByCustomer(1L);
     }
 
     @Test
     void updateShouldReturnUpdatedProduct() throws Exception {
-        when(productService.update(any(Long.class), any(Long.class), any(CreateProductRequest.class)))
+        when(productUseCase.update(any(Long.class), any(Long.class), any(CreateProductRequest.class)))
             .thenReturn(new ProductResponse(5L, "Monitor", new BigDecimal("900000"), "27 pulgadas"));
 
         String payload =
@@ -139,6 +140,6 @@ class ProductControllerTest {
     void deleteShouldReturnNoContent() throws Exception {
         mockMvc.perform(delete("/api/customers/1/products/9")).andExpect(status().isNoContent());
 
-        verify(productService).delete(1L, 9L);
+        verify(productUseCase).delete(1L, 9L);
     }
 }
