@@ -77,9 +77,7 @@ public class JwtService {
             if (decoded.length >= 32) {
                 keyBytes = decoded;
             }
-        } catch (RuntimeException ex) {
-            // Fallback to raw secret when value is not valid Base64.
-        }
+        } catch (RuntimeException ignored) {}
 
         if (keyBytes == null) {
             keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
