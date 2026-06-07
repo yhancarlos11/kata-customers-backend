@@ -58,10 +58,26 @@ public class AuthController {
         @ApiResponse(responseCode = "401", description = "Token ausente, invalido o expirado")
     })
     public ResponseEntity<LogoutResponse> logout(
-        @RequestHeader("Authorization") String authorizationHeader
+        @RequestHeader("Authorization") String authorizationHeader,
+        @RequestBody(required = false) LogoutRequest request
     ) {
         String token = extractBearerToken(authorizationHeader);
-        return ResponseEntity.ok(authService.logout(token));
+        String refreshToken = request == null ? null : request.getRefreshToken();
+        return ResponseEntity.ok(authService.logout(token, refreshToken));
+    }
+
+    @PostMapping("/refresh")
+    @Operation(
+        summary = "Renovar token de acceso",
+        description = "Recibe refresh token valido y retorna un nuevo par de tokens"
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Token renovado"),
+        @ApiResponse(responseCode = "401", description = "Refresh token invalido o expirado"),
+        @ApiResponse(responseCode = "400", description = "Solicitud invalida")
+    })
+    public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        return ResponseEntity.ok(authService.refresh(request.getRefreshToken()));
     }
 
     @GetMapping("/me")
