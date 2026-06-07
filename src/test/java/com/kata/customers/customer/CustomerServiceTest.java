@@ -1,5 +1,6 @@
 package com.kata.customers.customer;
 
+import com.kata.customers.common.ResourceNotFoundException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -88,6 +89,18 @@ class CustomerServiceTest {
     }
 
     @Test
+    void findByIdShouldReturnCustomerWhenExists() {
+        Customer customer = new Customer(3L, "Maria", "maria@email.com", LocalDateTime.of(2026, 1, 2, 10, 0));
+        when(customerRepository.findById(3L)).thenReturn(Optional.of(customer));
+
+        CustomerDetailResponse result = customerService.findById(3L);
+
+        assertEquals(3L, result.getId());
+        assertEquals("Maria", result.getName());
+        assertEquals("maria@email.com", result.getEmail());
+    }
+
+    @Test
     void updateShouldPersistNewValuesWhenCustomerExists() {
         CreateCustomerRequest request = new CreateCustomerRequest();
         request.setName("Cliente Actualizado");
@@ -115,7 +128,7 @@ class CustomerServiceTest {
     void deleteShouldFailWhenCustomerDoesNotExist() {
         when(customerRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> customerService.delete(99L));
+        assertThrows(ResourceNotFoundException.class, () -> customerService.delete(99L));
         verify(customerRepository, never()).delete(any(Customer.class));
     }
 }

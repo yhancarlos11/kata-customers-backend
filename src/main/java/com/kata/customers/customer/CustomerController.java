@@ -51,12 +51,24 @@ public class CustomerController {
         return ResponseEntity.ok(customerService.findAll());
     }
 
+    @GetMapping("/{id}")
+    @Operation(summary = "Consultar cliente por id", description = "Retorna un cliente especifico")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Cliente encontrado"),
+        @ApiResponse(responseCode = "401", description = "No autenticado"),
+        @ApiResponse(responseCode = "404", description = "Cliente no encontrado")
+    })
+    public ResponseEntity<CustomerDetailResponse> findById(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(customerService.findById(id));
+    }
+
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar cliente", description = "Actualiza nombre y email del cliente")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Cliente actualizado"),
         @ApiResponse(responseCode = "400", description = "Datos invalidos"),
-        @ApiResponse(responseCode = "401", description = "No autenticado")
+        @ApiResponse(responseCode = "401", description = "No autenticado"),
+        @ApiResponse(responseCode = "404", description = "Cliente no encontrado")
     })
     public ResponseEntity<CustomerResponse> update(
         @PathVariable("id") Long id,
@@ -70,7 +82,7 @@ public class CustomerController {
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Cliente eliminado"),
         @ApiResponse(responseCode = "401", description = "No autenticado"),
-        @ApiResponse(responseCode = "400", description = "Cliente no encontrado")
+        @ApiResponse(responseCode = "404", description = "Cliente no encontrado")
     })
     public ResponseEntity<Void> delete(@PathVariable("id") Long id) {
         customerService.delete(id);

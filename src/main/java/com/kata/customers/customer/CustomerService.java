@@ -1,7 +1,10 @@
 package com.kata.customers.customer;
 
+import com.kata.customers.common.ResourceNotFoundException;
+import com.kata.customers.product.ProductResponse;
 import java.util.List;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CustomerService {
@@ -29,10 +32,38 @@ public class CustomerService {
         return customerRepository.findAll().stream().map(this::toResponse).toList();
     }
 
+    @Transactional(readOnly = true)
+    public CustomerDetailResponse findById(Long customerId) {
+        Customer customer = customerRepository
+            .findById(customerId)
+            .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado"));
+
+        List<ProductResponse> products = customer
+            .getProducts()
+            .stream()
+            .map(product ->
+                new ProductResponse(
+                    product.getId(),
+                    product.getName(),
+                    product.getPrice(),
+                    product.getDescription()
+                )
+            )
+            .toList();
+
+        return new CustomerDetailResponse(
+            customer.getId(),
+            customer.getName(),
+            customer.getEmail(),
+            customer.getCreatedAt(),
+            products
+        );
+    }
+
     public CustomerResponse update(Long customerId, CreateCustomerRequest request) {
         Customer customer = customerRepository
             .findById(customerId)
-            .orElseThrow(() -> new IllegalArgumentException("Cliente no encontrado"));
+            .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado"));
 
         if (customerRepository.existsByEmailAndIdNot(request.getEmail(), customerId)) {
             throw new IllegalArgumentException("Ya existe un customer con este email");
@@ -48,7 +79,7 @@ public class CustomerService {
     public void delete(Long customerId) {
         Customer customer = customerRepository
             .findById(customerId)
-            .orElseThrow(() -> new IllegalArgumentException("Cliente no encontrado"));
+            .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado"));
         customerRepository.delete(customer);
     }
 
