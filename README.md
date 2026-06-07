@@ -15,7 +15,7 @@ Backend Spring Boot para el reto de ciclo de vida con ambientes DEV y PROD simul
 
 ## Frameworks y librerias
 
-- Java 21 
+- Java 21
 - Spring Boot 3.5.0
 - Spring Web
 - Spring Security
