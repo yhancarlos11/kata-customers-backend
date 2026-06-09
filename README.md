@@ -100,7 +100,6 @@ En PROD simulado usar puerto `9090`.
 
 ## Seguridad
 
-- No subir credenciales reales ni secretos al repositorio.
 - Variables para JWT:
 	- `JWT_SECRET_DEV`
 	- `JWT_SECRET_PROD`
@@ -170,24 +169,7 @@ Objetivo:
 - Local: `docker compose` para desarrollo.
 - Cloud: Frontend en Vercel + Backend en Render + DB en Neon
 
-Archivos de apoyo incluidos en repo:
-
-- `render.yaml` (base para Render)
-- `../kata-customers-frontend/vercel.json` (rewrite `/api` al backend cloud)
-- `../.env.example` (variables de referencia)
-
 ## Configuracion de despliegue backend (Render + Neon)
-
-Referencia completa:
-
-- `../DEPLOYMENT.md`
-
-Resumen backend:
-
-- Runtime en Render: `Docker`
-- Root Directory: vacio (o `.`)
-- Dockerfile Path: `./Dockerfile`
-- Docker Build Context Directory: `.`
 
 Variables requeridas en Render:
 
@@ -206,10 +188,9 @@ Validacion cloud backend:
 
 ## Despliegue continuo (CD)
 
-Si conectas tu repo en Vercel y Render con `auto deploy` activo:
+Se conecta render con `auto deploy` activo:
 
 - Cada push a rama principal dispara build/deploy automatico.
-- Esto SI es despliegue continuo (CD).
 
 ## Integracion continua (CI) y gate de calidad
 
@@ -224,6 +205,4 @@ El workflow ejecuta en cada push/PR a `main`:
 
 Para que el despliegue a produccion quede condicionado a CI:
 
-- habilitar Branch protection sobre `main`
-- marcar como required check el workflow `Backend CI`
-- mantener deploy en Render desde `main`
+- Se habilita Branch protection sobre `main`
